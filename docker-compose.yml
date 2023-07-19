@@ -77,7 +77,7 @@ services:
       EMAIL_SENDMAIL_NEW_LINE: 'unix'
       EMAIL_SENDMAIL_PATH: '/usr/sbin/sendmail'
 
-      PUBLIC_URL: 'https://wrote.render.com'
+      PUBLIC_URL: 'https://wrote.onrender.com'
 
       
       
