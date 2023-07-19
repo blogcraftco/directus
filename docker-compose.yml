@@ -1,159 +1,81 @@
-# This compose file is meant to spin up a copy of all supported database vendors + Redis and S3 (Minio).
-# For production use see the docker compose file example in the docs:
-#     https://docs.directus.io/self-hosted/docker-guide.html#example-docker-compose
-#
-# ONLY FOR DEBUGGING. THIS IS NOT INTENDED FOR PRODUCTION USE.
-#
-# Ports:
-#   Postgres:        5100
-#   MySQL (8):       5101
-#   MariaDB:         5102
-#   MS SQL:          5103
-#   Oracle:          5104
-#   Redis:           5105
-#   Minio (S3):      5106
-#   Azure            5107
-#   MySQL (5.7):     5108
-#   Keycloak:        5110
-#   Postgres (10):   5111
-#   Minio Admin:     5112
-#   CockroachDB:     5113
-#
-# Credentials:
-#   Postgres:
-#     User:          postgres
-#     Password:      secret
-#
-#   MySQL:
-#     User:          root
-#     Password:      secret
-#
-#   MariaDB:
-#     User:          root
-#     Password:      secret
-#
-#   MS SQL:
-#     User:          sa
-#     Password:      Test@123
-#
-#   Oracle DB:
-#     User:          secretsysuser
-#     Password:      secretpassword
-#     Role:          SYSDEFAULT
-#     SID:           XE
-#
-#   Redis:
-#     n/a
-#
-#   Minio:
-#     Key:           minioadmin
-#     Secret:        minioadmin
-#     (Make sure to set S3_FORCE_PATH_STYLE to true)
-#
-#   Azure Blob Storage
-#     Name:          devstoreaccount1
-#     Key:           Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-#     Container:     devstoreaccount1
-#
-#   Keycloak
-#     User:          admin
-#     Password:      secret
-#
-#   CockroachDB
-#     User:          admin
-#     Password:      --
-
-version: '3.1'
+version: '3'
 services:
-  postgres:
-    image: postgis/postgis:13-3.1-alpine
+  database:
+    image: postgis/postgis:13-master
+    # Required when running on platform other than amd64, like Apple M1/M2:
+    # platform: linux/amd64
+    volumes:
+      - ./data/database:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: directus
-    ports:
-      - 5100:5432
+      POSTGRES_USER: 'directus'
+      POSTGRES_PASSWORD: 'directus'
+      POSTGRES_DB: 'directus'
 
-  mysql:
-    image: mysql:8
-    command: --default-authentication-plugin=mysql_native_password
+  cache:
+    image: redis:6
+
+  directus:
+    image: directus/directus:10.4.0
+    ports:
+      - 8055:8055
+    volumes:
+      - ./uploads:/directus/uploads
+      # If you want to load extensions from the host
+      - ./extensions:/directus/extensions
+    depends_on:
+      - cache
+      - database
     environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: directus
-    ports:
-      - 5101:3306
-    cap_add:
-      - SYS_NICE
+      KEY: '255d861b-5ea1-5996-9aa3-922530ec40b1'
+      SECRET: '6116487b-cda1-52c2-b5b5-c8022c45e263'
 
-  maria:
-    image: mariadb:10.7
-    environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: directus
-    ports:
-      - 5102:3306
+      DB_CLIENT: 'pg'
+      DB_HOST: 'db.jzwgtsbaaznxyqpfxpwe.supabase.co'
+      DB_PORT: '5432'
+      DB_DATABASE: 'postgres'
+      DB_USER: 'postgres'
+      DB_PASSWORD: 'NpJTv0Eq&Ao5xaLU'
+      DB_SSL: 'false'
 
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=Test@123
-    ports:
-      - 5103:1433
+      CACHE_ENABLED: 'false'
+      CACHE_STORE: 'memory'
+      REDIS: 'redis://cache:6379'
 
-  oracle:
-    image: quillbuilduser/oracle-18-xe-micro-sq
-    ports:
-      - 5104:1521
-    environment:
-      - OPATCH_JRE_MEMORY_OPTIONS=-Xms128m -Xmx256m -XX:PermSize=16m -XX:MaxPermSize=32m -Xss1m
-      - ORACLE_ALLOW_REMOTE=true
-    shm_size: '1gb' # more like smh-size amirite 🥁
+      ADMIN_EMAIL: 'ryan@cooperonlineenterprises.com'
+      ADMIN_PASSWORD: '@JRC-vkc-1975@'
 
-  redis:
-    image: redis:6-alpine
-    ports:
-      - 5105:6379
+      RATE_LIMITER_ENABLED: 'false'
+      RATE_LIMITER_STORE: 'memory'
+      RATE_LIMITER_POINTS: '25'
+      RATE_LIMITER_DURATION: '1'
 
-  minio:
-    image: minio/minio:latest
-    command: server /data/minio/ --console-address :9001
-    ports:
-      - 5106:9000
-      - 5112:9001
+      ASSETS_CACHE_TTL: '30d'
 
-  azure:
-    image: mcr.microsoft.com/azure-storage/azurite
-    ports:
-      - 5107:10000
+      STORAGE_LOCATIONS: 'local'
+      STORAGE_LOCAL_DRIVER: 'local'
+      STORAGE_LOCAL_ROOT: './uploads'
 
-  mysql5:
-    image: mysql:5
-    environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: directus
-    ports:
-      - 5108:3306
+      ACCESS_TOKEN_TTL: '15m'
+      REFRESH_TOKEN_TTL: '7d'
+      REFRESH_TOKEN_COOKIE_SECURE: 'false'
+      REFRESH_TOKEN_COOKIE_SAME_SITE: 'lax'
+      REFRESH_TOKEN_COOKIE_NAME: 'directus_refresh_token'
 
-  keycloak:
-    image: jboss/keycloak:latest
-    environment:
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: secret
-      DB_ADDR: ''
-      DB_VENDOR: h2
-    ports:
-      - 5110:8080
+      CORS_ENABLED: 'true'
+      CORS_ORIGIN: 'true'
+      CORS_METHODS: 'GET,POST,PATCH,DELETE'
+      CORS_ALLOWED_HEADERS: 'Content-Type,Authorization'
+      CORS_EXPOSED_HEADERS: 'Content-Range'
+      CORS_CREDENTIALS: 'true'
+      CORS_MAX_AGE: '18000'
 
-  postgres10:
-    image: postgis/postgis:10-3.1-alpine
-    environment:
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: directus
-    ports:
-      - 5111:5432
+      EXTENSIONS_PATH: './extensions'
+      EXTENSIONS_AUTO_RELOAD: 'false'
 
-  cockroachdb:
-    image: cockroachdb/cockroach:latest-v21.1
-    command: start-single-node --cluster-name=example-single-node --insecure
-    ports:
-      - 5113:26257
+      EMAIL_FROM: 'no-reply@directus.io'
+      EMAIL_TRANSPORT: 'sendmail'
+      EMAIL_SENDMAIL_NEW_LINE: 'unix'
+      EMAIL_SENDMAIL_PATH: '/usr/sbin/sendmail'
+
+      
+      
