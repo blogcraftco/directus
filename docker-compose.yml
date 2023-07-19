@@ -37,8 +37,8 @@ services:
       DB_PASSWORD: 'NpJTv0Eq&Ao5xaLU'
       DB_SSL: 'false'
 
-      CACHE_ENABLED: 'false'
-      CACHE_STORE: 'memory'
+      CACHE_ENABLED: 'true'
+      CACHE_STORE: 'redis'
       REDIS: 'redis://cache:6379'
 
       ADMIN_EMAIL: 'ryan@cooperonlineenterprises.com'
@@ -76,6 +76,8 @@ services:
       EMAIL_TRANSPORT: 'sendmail'
       EMAIL_SENDMAIL_NEW_LINE: 'unix'
       EMAIL_SENDMAIL_PATH: '/usr/sbin/sendmail'
+
+      PUBLIC_URL: 'https://wrote.render.com'
 
       
       
