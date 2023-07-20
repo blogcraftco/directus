@@ -42,7 +42,7 @@ services:
       REDIS: 'redis://cache:6379'
 
       ADMIN_EMAIL: 'ryan@cooperonlineenterprises.com'
-      ADMIN_PASSWORD: '@JRC-vkc-1975@'
+      ADMIN_PASSWORD: 'password'
 
       RATE_LIMITER_ENABLED: 'false'
       RATE_LIMITER_STORE: 'memory'
